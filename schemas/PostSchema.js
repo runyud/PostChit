@@ -19,6 +19,16 @@ const PostSchema = new Schema(
                 ref: 'User',
             },
         ],
+        shareUsers: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: 'User',
+            },
+        ],
+        shareData: {
+            type: Schema.Types.ObjectId,
+            ref: 'Post',
+        },
     },
     { timestamps: true }
 );

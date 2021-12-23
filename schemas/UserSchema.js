@@ -40,6 +40,12 @@ const UserSchema = new Schema(
                 ref: 'Post',
             },
         ],
+        shares: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: 'Post',
+            },
+        ]
     },
     { timestamps: true }
 );

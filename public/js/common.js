@@ -35,6 +35,27 @@ $(document).on('click', '.likeButton', (event) => {
     });
 });
 
+$(document).on('click', '.shareButton', (event) => {
+    let button = $(event.target);
+    let postId = getPostIdFromElement(button);
+
+    if (postId === undefined) return;
+
+    $.ajax({
+        url: `/api/posts/${postId}/share`,
+        type: 'POST',
+        success: (postData) => {
+            button.find('span').text(postData.shareUsers.length || '');
+
+            if (postData.shareUsers.includes(userLoggedIn._id)) {
+                button.addClass('active');
+            } else {
+                button.removeClass('active');
+            }
+        },
+    });
+});
+
 function getPostIdFromElement(element) {
     let isRoot = element.hasClass('post');
     let rootElement = isRoot ? element : element.closest('.post');
@@ -62,6 +83,13 @@ $('#submitPostButton').click((event) => {
 });
 
 function createPostHtml(postData) {
+
+    if(postData == null) return alert("post object is null");
+
+    let isShare = postData.shareData !== undefined;
+    let sharedBy = isShare ? postData.postedBy.userName : null;
+    postData = isShare ? postData.shareData : postData;
+
     let postedBy = postData.postedBy;
 
     if (postedBy._id === undefined) {
@@ -72,8 +100,20 @@ function createPostHtml(postData) {
     let timestamp = timeDifference(new Date(), new Date(postData.createdAt));
 
     let likeButtonActiveClass = postData.likes.includes(userLoggedIn._id) ? "active" : "";
+    let shareButtonActiveClass = postData.shareUsers.includes(userLoggedIn._id) ? "active" : "";
+
+    let shareText = '';
+    if(isShare) {
+        shareText = `<span>
+                        <i class="far fa-share-square"></i>
+                        Shared by <a href = '/profile/${sharedBy}'>@${sharedBy}</a>
+                    </span>`
+    }
 
     return `<div class='post' data-id=${postData._id}>
+                <div class='postActionContainer'>
+                    ${shareText}
+                </div>
                 <div class='mainContentContainer'>
                     <div class='userImageContainer'>
                         <img src='${postedBy.profilePic}'>
@@ -96,8 +136,9 @@ function createPostHtml(postData) {
                                 </button>
                             </div>
                             <div class='postButtonContainer green'>
-                                <button class='share'>
+                                <button class='shareButton ${shareButtonActiveClass}'>
                                     <i class="far fa-share-square"></i>
+                                    <span>${postData.shareUsers.length || ''}</span>
                                 </button>
                             </div>
                             <div class='postButtonContainer red'>
