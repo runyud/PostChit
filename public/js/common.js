@@ -24,7 +24,7 @@ $('#replyModal').on('show.bs.modal', (event) => {
     $('#submitReplyButton').data('id', postId);
 
     $.get(`/api/posts/${postId}`, (results) => {
-        outputPosts(results, $('#originalPostContainer'));
+        outputPosts(results.postData, $('#originalPostContainer'));
     });
 });
 
@@ -74,6 +74,16 @@ $(document).on('click', '.shareButton', (event) => {
     });
 });
 
+$(document).on('click', '.post', (event) => {
+    let element = $(event.target);
+    let postId = getPostIdFromElement(element);
+
+    if(postId !== undefined && !element.is('button')) {
+        window.location.href = `/posts/${postId}`;
+    }
+
+});
+
 function getPostIdFromElement(element) {
     let isRoot = element.hasClass('post');
     let rootElement = isRoot ? element : element.closest('.post');
@@ -112,7 +122,7 @@ $('#submitPostButton, #submitReplyButton').click((event) => {
     });
 });
 
-function createPostHtml(postData) {
+function createPostHtml(postData, largeFont = false) {
     if (postData == null) return alert('post object is null');
 
     let isShare = postData.shareData !== undefined;
@@ -134,6 +144,7 @@ function createPostHtml(postData) {
     let shareButtonActiveClass = postData.shareUsers.includes(userLoggedIn._id)
         ? 'active'
         : '';
+    let largeFontClass = largeFont ? "largeFont" : "";
 
     let shareText = '';
     if (isShare) {
@@ -144,7 +155,7 @@ function createPostHtml(postData) {
     }
 
     let replyFlag = '';
-    if (postData.replyTo) {
+    if (postData.replyTo && postData.replyTo._id) {
         if (!postData.replyTo._id) {
             return alert('Reply id is not populated');
         } else if (!postData.replyTo.postedBy._id) {
@@ -157,7 +168,7 @@ function createPostHtml(postData) {
                     </div>`;
     }
 
-    return `<div class='post' data-id=${postData._id}>
+    return `<div class='post ${largeFontClass}' data-id=${postData._id}>
                 <div class='postActionContainer'>
                     ${shareText}
                 </div>
@@ -243,4 +254,22 @@ function outputPosts(results, container) {
     if (results.length == 0) {
         container.append("<span class='noResults'>Nothing to show. </span>");
     }
+}
+
+function outputPostsWithReplies(results, container) {
+    container.html('');
+
+    if(results.replyTo !== undefined && results.replyTo._id !== undefined) {
+        let html = createPostHtml(results.replyTo);
+        container.append(html);
+    }
+
+    let mainPosthtml = createPostHtml(results.postData, true);
+    container.append(mainPosthtml);
+
+    results.replies.forEach((result) => {
+        let html = createPostHtml(result);
+        container.append(html);
+    });
+
 }
