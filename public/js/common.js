@@ -28,6 +28,31 @@ $('#replyModal').on('show.bs.modal', (event) => {
     });
 });
 
+$('#deletePostModal').on('show.bs.modal', (event) => {
+    let button = $(event.relatedTarget);
+    let postId = getPostIdFromElement(button);
+    $('#deletePostButton').data('id', postId);
+
+
+});
+
+$("#deletePostButton").click((event) => {
+    let postId = $(event.target).data("id");
+
+    $.ajax({
+        url: `/api/posts/${postId}`,
+        type: 'DELETE',
+        success: (data, status, xhr) => {
+
+            if(xhr.status !== 202) {
+                alert('could not delete post');
+                return;
+            }
+            location.reload();
+        },
+    });
+})
+
 $('#replyModal').on('hidden.bs.modal', () => {
     $('#originalPostContainer').html('');
 });
@@ -168,6 +193,12 @@ function createPostHtml(postData, largeFont = false) {
                     </div>`;
     }
 
+    let button = "";
+
+    if(postData.postedBy._id == userLoggedIn._id) {
+        button = `<button data-id="${postData._id}" data-toggle="modal" data-target="#deletePostModal"><i class='fas fa-times'></i></button>`
+    }
+
     return `<div class='post ${largeFontClass}' data-id=${postData._id}>
                 <div class='postActionContainer'>
                     ${shareText}
@@ -183,6 +214,7 @@ function createPostHtml(postData, largeFont = false) {
                             }' class='displayName'>${displayName}</a>
                             <span class='username'>@${postedBy.userName}</span>
                             <span class='date'>${timestamp}</span>
+                            ${button}
                         </div>
                         ${replyFlag}
                         <div class='postBody'>
