@@ -1,3 +1,6 @@
+// Globals
+let cropper;
+
 $('#postTextarea, #replyTextarea').keyup((event) => {
     let textbox = $(event.target);
     let value = textbox.val().trim();
@@ -32,26 +35,70 @@ $('#deletePostModal').on('show.bs.modal', (event) => {
     let button = $(event.relatedTarget);
     let postId = getPostIdFromElement(button);
     $('#deletePostButton').data('id', postId);
-
-
 });
 
-$("#deletePostButton").click((event) => {
-    let postId = $(event.target).data("id");
+$('#deletePostButton').click((event) => {
+    let postId = $(event.target).data('id');
 
     $.ajax({
         url: `/api/posts/${postId}`,
         type: 'DELETE',
         success: (data, status, xhr) => {
-
-            if(xhr.status !== 202) {
+            if (xhr.status !== 202) {
                 alert('could not delete post');
                 return;
             }
             location.reload();
         },
     });
-})
+});
+
+$('#filePhoto').change((event) => {
+    let input = $(event.target)[0];
+
+    if (input.files && input.files[0]) {
+        let reader = new FileReader();
+        reader.onload = (e) => {
+            let image = document.getElementById('imagePreview');
+            image.src = e.target.result;
+
+            if (cropper !== undefined) {
+                cropper.destroy();
+            }
+
+            cropper = new Cropper(image, {
+                aspectRatio: 1 / 1,
+                background: false,
+            });
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+});
+
+$('#imageUploadButton').click(() => {
+    let canvas = cropper.getCroppedCanvas();
+
+    if (canvas == null) {
+        alert('Could not upload image. Make sure it is an image file!');
+        return;
+    }
+
+    canvas.toBlob((blob) => {
+        let formData = new FormData();
+        formData.append('croppedImage', blob);
+
+        $.ajax({
+            url: '/api/users/profilePicture',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: () => {
+                location.reload();
+            },
+        });
+    });
+});
 
 $('#replyModal').on('hidden.bs.modal', () => {
     $('#originalPostContainer').html('');
@@ -103,44 +150,41 @@ $(document).on('click', '.post', (event) => {
     let element = $(event.target);
     let postId = getPostIdFromElement(element);
 
-    if(postId !== undefined && !element.is('button')) {
+    if (postId !== undefined && !element.is('button')) {
         window.location.href = `/posts/${postId}`;
     }
-
 });
 
 $(document).on('click', '.followButton', (event) => {
     let button = $(event.target);
     let userId = button.data().user;
-    
+
     $.ajax({
         url: `/api/users/${userId}/follow`,
         type: 'PUT',
         success: (data, status, xhr) => {
-            
-            if(xhr.status == 404) {
+            if (xhr.status == 404) {
                 alert('user not found');
                 return;
             }
-        
+
             let difference = 1;
             if (data.following && data.following.includes(userId)) {
                 button.addClass('following');
-                button.text('Following')
+                button.text('Following');
             } else {
                 button.removeClass('following');
                 button.text('Follow');
                 difference = -1;
             }
-            
+
             let followersLabel = $('#followersValue');
-            if(followersLabel.length != 0) {
+            if (followersLabel.length != 0) {
                 let followersText = followersLabel.text();
                 followersLabel.text(parseInt(followersText) + difference);
             }
         },
     });
-
 });
 
 function getPostIdFromElement(element) {
@@ -203,7 +247,7 @@ function createPostHtml(postData, largeFont = false) {
     let shareButtonActiveClass = postData.shareUsers.includes(userLoggedIn._id)
         ? 'active'
         : '';
-    let largeFontClass = largeFont ? "largeFont" : "";
+    let largeFontClass = largeFont ? 'largeFont' : '';
 
     let shareText = '';
     if (isShare) {
@@ -227,10 +271,10 @@ function createPostHtml(postData, largeFont = false) {
                     </div>`;
     }
 
-    let button = "";
+    let button = '';
 
-    if(postData.postedBy._id == userLoggedIn._id) {
-        button = `<button data-id="${postData._id}" data-toggle="modal" data-target="#deletePostModal"><i class='fas fa-times'></i></button>`
+    if (postData.postedBy._id == userLoggedIn._id) {
+        button = `<button data-id="${postData._id}" data-toggle="modal" data-target="#deletePostModal"><i class='fas fa-times'></i></button>`;
     }
 
     return `<div class='post ${largeFontClass}' data-id=${postData._id}>
@@ -325,7 +369,7 @@ function outputPosts(results, container) {
 function outputPostsWithReplies(results, container) {
     container.html('');
 
-    if(results.replyTo !== undefined && results.replyTo._id !== undefined) {
+    if (results.replyTo !== undefined && results.replyTo._id !== undefined) {
         let html = createPostHtml(results.replyTo);
         container.append(html);
     }
@@ -337,5 +381,4 @@ function outputPostsWithReplies(results, container) {
         let html = createPostHtml(result);
         container.append(html);
     });
-
 }
