@@ -10,6 +10,29 @@ const User = require('../../schemas/UserSchema');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
+router.get('/', async (req, res, next) => {
+    let searchObj = req.query;
+
+    if (req.query.search !== undefined) {
+        searchObj = {
+            $or: [
+                { firstName: { $regex: req.query.search, $options: 'i' } },
+                { lastName: { $regex: req.query.search, $options: 'i' } },
+                { userName: { $regex: req.query.search, $options: 'i' } },
+            ],
+        };
+    }
+
+    User.find(searchObj)
+        .then((results) => {
+            res.status(200).send(results);
+        })
+        .catch((err) => {
+            console.log(err);
+            res.sendStatus(400);
+        });
+});
+
 router.put('/:userId/follow', async (req, res, next) => {
     let userId = req.params.userId;
 
@@ -113,7 +136,7 @@ router.post(
         let filePath = `/uploads/images/${req.file.filename}.png`;
         let tempPath = req.file.path;
         let targetPath = path.join(__dirname, `../../${filePath}`);
-      
+
         fs.rename(tempPath, targetPath, async (error) => {
             if (error != null) {
                 console.log(error);
