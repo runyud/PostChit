@@ -1,5 +1,3 @@
-let timer;
-
 $('#searchBox').keydown((event) => {
     clearTimeout(timer);
     let textbox = $(event.target);
@@ -16,8 +14,6 @@ $('#searchBox').keydown((event) => {
         }
     }, 1000);
 
-    console.log(value);
-    console.log(searchType);
 });
 
 function search(searchTerm, searchType) {

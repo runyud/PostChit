@@ -1,5 +1,7 @@
 // Globals
 let cropper;
+let timer;
+let selectedUsers = [];
 
 $('#postTextarea, #replyTextarea').keyup((event) => {
     let textbox = $(event.target);
@@ -191,6 +193,45 @@ $('#coverPhotoUploadButton').click(() => {
             },
         });
     });
+});
+
+$('#createChatButton').click(() => {
+    let data = JSON.stringify(selectedUsers);
+
+    $.post('/api/chats', { users: data }, (chat) => {
+        if (!chat || !chat._id) {
+            return alert('Invalid response from server.');
+        }
+        window.location.href = `/messages/${chat._id}`;
+    });
+});
+
+$('#userSearchTextbox').keydown((event) => {
+    clearTimeout(timer);
+    let textbox = $(event.target);
+    let value = textbox.val();
+
+    if (value == '' && (event.which == 8 || event.keyCode == 8)) {
+        // remove user from selection
+        selectedUsers.pop();
+        updateSelectedUsersHtml();
+        $('.resultsContainer').html('');
+
+        if (selectedUsers.length == 0) {
+            $('#createChatButton').prop('disabled', true);
+        }
+        return;
+    }
+
+    timer = setTimeout(() => {
+        value = textbox.val().trim();
+
+        if (value == '') {
+            $('.resultsContainer').html('');
+        } else {
+            searchUsers(value);
+        }
+    }, 1000);
 });
 
 $('#replyModal').on('hidden.bs.modal', () => {
@@ -491,24 +532,24 @@ function outputPostsWithReplies(results, container) {
 function outputUsers(results, container) {
     container.html('');
 
-    results.forEach(result => {
+    results.forEach((result) => {
         let html = createUserHtml(result, true);
         container.append(html);
-    })
+    });
 
-    if(results.length == 0) {
-        container.append("<span class='noResults'> No results found </span>")
+    if (results.length == 0) {
+        container.append("<span class='noResults'> No results found </span>");
     }
 }
 
 function createUserHtml(userData, showFollowButton) {
-
     let name = userData.firstName + ' ' + userData.lastName;
-    let isFollowing = userLoggedIn.following && userLoggedIn.following.includes(userData._id);
-    let text = isFollowing ? "Following" : "Follow"
-    let buttonClass = isFollowing ? "followButton following" : "followButton"
+    let isFollowing =
+        userLoggedIn.following && userLoggedIn.following.includes(userData._id);
+    let text = isFollowing ? 'Following' : 'Follow';
+    let buttonClass = isFollowing ? 'followButton following' : 'followButton';
 
-    let followButton = "";
+    let followButton = '';
     if (showFollowButton && userLoggedIn._id != userData._id) {
         followButton = `<div class='followButtonContainer'>
                             <button class='${buttonClass}' data-user='${userData._id}'>${text}</button>
@@ -527,4 +568,52 @@ function createUserHtml(userData, showFollowButton) {
                 </div>
                 ${followButton}
             </div>`;
+}
+
+function searchUsers(searchTerm) {
+    $.get('/api/users', { search: searchTerm }, (results) => {
+        outputSelectableUsers(results, $('.resultsContainer'));
+    });
+}
+
+function outputSelectableUsers(results, container) {
+    container.html('');
+
+    results.forEach((result) => {
+        if (
+            result._id == userLoggedIn._id ||
+            selectedUsers.some((u) => u._id == result._id)
+        ) {
+            return;
+        }
+        let html = createUserHtml(result, false);
+        let element = $(html);
+        element.click(() => userSelected(result));
+        container.append(element);
+    });
+
+    if (results.length == 0) {
+        container.append("<span class='noResults'> No results found </span>");
+    }
+}
+
+function userSelected(user) {
+    selectedUsers.push(user);
+    updateSelectedUsersHtml();
+    $('#userSearchTextbox').val('').focus();
+    $('.resultsContainer').html('');
+    $('#createChatButton').prop('disabled', false);
+}
+
+function updateSelectedUsersHtml() {
+    let elements = [];
+
+    selectedUsers.forEach((user) => {
+        let name = user.firstName + ' ' + user.lastName;
+        let userElement = $(`<span class='selectedUser'>${name}</span>`);
+        elements.push(userElement);
+    });
+
+    $('.selectedUser').remove();
+    $('#selectedUsers').prepend(elements);
 }

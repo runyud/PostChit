@@ -33,10 +33,12 @@ const postRoute = require('./routes/postRoutes');
 const profileRoute = require('./routes/profileRoutes');
 const uploadRoute = require('./routes/uploadRoutes');
 const searchRoute = require('./routes/searchRoutes');
+const messagesRoute = require('./routes/msgRoutes');
 
 // Api Routes
 const postsApiRoute = require('./routes/api/postsApi');
 const usersApiRoute = require('./routes/api/usersApi');
+const chatsApiRoute = require('./routes/api/chatsApi');
 
 app.use('/login', loginRoute);
 app.use('/register', registerRoute);
@@ -45,9 +47,11 @@ app.use('/posts', middleware.requireLogin, postRoute);
 app.use('/profile', middleware.requireLogin, profileRoute);
 app.use('/uploads', uploadRoute);
 app.use('/search', middleware.requireLogin, searchRoute);
+app.use('/messages', middleware.requireLogin, messagesRoute);
 
 app.use('/api/posts', postsApiRoute);
 app.use('/api/users', usersApiRoute);
+app.use('/api/chats', chatsApiRoute);
 
 app.get('/', middleware.requireLogin, (req, res, next) => {
     let payload = {
