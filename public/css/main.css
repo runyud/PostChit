@@ -532,7 +532,7 @@ button span {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    padding: var(--spacing)
+    padding: var(--spacing);
 }
 
 .chatImagesContainer {
@@ -565,6 +565,10 @@ button span {
 .chatImageContainer img:not(:last-child),
 .chatImagesContainer .userCount {
     margin-left: -10px;
+}
+
+#chatNameTextbox {
+    width: 100%;
 }
 
 #userSearchTextbox {
