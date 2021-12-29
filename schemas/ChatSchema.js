@@ -12,14 +12,13 @@ const ChatSchema = new Schema(
                 ref: 'User',
             },
         ],
-        latestMessage: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: 'Message',
-            },
-        ]
+        latestMessage: {
+            type: Schema.Types.ObjectId,
+            ref: 'Message',
+        },
     },
     { timestamps: true }
 );
 
-module.exports = mongoose.model('Chat', ChatSchema);
+let Chat = mongoose.model('Chat', ChatSchema);
+module.exports = Chat;
