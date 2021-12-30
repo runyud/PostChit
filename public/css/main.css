@@ -21,6 +21,10 @@ body {
     font-weight: 300;
 }
 
+ul {
+    margin: 0;
+}
+
 * {
     outline: none !important;
 }
@@ -579,15 +583,24 @@ button span {
     display: flex;
     align-items: flex-end;
     flex-shrink: 0;
-    -webkit-flex: 0;
-            flex: 0;
 }
 
+.typingDots img,
 .chatMessages .message .messageBody {
     background-color: #f1f0f0;
     padding: 6px 12px;
     border-radius: 18px;
     font-size: 14px;
+}
+
+.typingDots img {
+    height: 35px;
+}
+
+.typingDots {
+    padding: var(--spacing);
+    padding-bottom: 0;
+    display: none;
 }
 
 .chatMessages .message .messageContainer {
@@ -648,7 +661,7 @@ button span {
 }
 
 .senderName {
-    color: rgba(0,0,0,0.4);
+    color: rgba(0, 0, 0, 0.4);
 }
 
 .chatMessages .imageContainer {
@@ -656,7 +669,7 @@ button span {
     width: 24px;
     margin-right: 7px;
 }
-  
+
 .chatMessages img {
     height: 100%;
     border-radius: 50%;
@@ -762,7 +775,7 @@ button span {
 }
 
 .loadingSpinnerContainer {
-    display:flex;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
