@@ -3,6 +3,11 @@ let cropper;
 let timer;
 let selectedUsers = [];
 
+$(document).ready(() => {
+    refreshMessagesBadge();
+    refreshNotificationsBadge();
+});
+
 $('#postTextarea, #replyTextarea').keyup((event) => {
     let textbox = $(event.target);
     let value = textbox.val().trim();
@@ -330,12 +335,10 @@ $(document).on('click', '.notification.active', (event) => {
 
     let callback = () => {
         window.location = href;
-    }
+    };
 
     markNotificationsAsOpened(notificationId, callback);
-})
-
-
+});
 
 function getPostIdFromElement(element) {
     let isRoot = element.hasClass('post');
@@ -661,6 +664,8 @@ function messageReceived(newMessage) {
     } else {
         addChatMessageHtml(newMessage);
     }
+
+    refreshMessagesBadge();
 }
 
 function markNotificationsAsOpened(notificationId = null, callback = null) {
@@ -673,9 +678,33 @@ function markNotificationsAsOpened(notificationId = null, callback = null) {
 
     $.ajax({
         url: url,
-        type: "PUT",
+        type: 'PUT',
         success: () => {
             callback();
+        },
+    });
+}
+
+function refreshMessagesBadge() {
+    $.get('/api/chats', { unreadOnly: true }, (data) => {
+        let numResults = data.length;
+
+        if(numResults > 0) {
+            $('#messagesBadge').text(numResults).addClass('active');
+        } else {
+            $('#messagesBadge').text('').removeClass('active');
         }
-    })
+    });
+}
+
+function refreshNotificationsBadge() {
+    $.get('/api/notifications', { unreadOnly: true }, (data) => {
+        let numResults = data.length;
+
+        if(numResults > 0) {
+            $('#notificationBadge').text(numResults).addClass('active');
+        } else {
+            $('#notificationBadge').text('').removeClass('active');
+        }
+    });
 }
